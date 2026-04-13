@@ -795,6 +795,7 @@ def cors(resp: Response):
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["X-Robots-Tag"] = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     return resp
 
 
