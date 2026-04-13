@@ -813,6 +813,8 @@ def static_pages(page: str):
         "terms-and-conditions.html",
         "ads-disclosure.html",
         "contact.html",
+        "favicon.png",
+        "favicon.ico",
         "robots.txt",
         "sitemap.xml",
         "ads.txt",
@@ -825,6 +827,8 @@ def static_pages(page: str):
         return jsonify({"error": "Not found"}), 404
     if page.endswith(".xml"):
         mime = "application/xml"
+    elif page.endswith(".png") or page.endswith(".ico"):
+        mime = "image/png"
     elif page.endswith(".txt"):
         mime = "text/plain; charset=utf-8"
     else:
