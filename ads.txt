@@ -1,0 +1,2 @@
+# Replace pub-XXXXXXXXXXXXXXXX with your real AdSense publisher ID before production.
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

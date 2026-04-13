@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Download a Google Drive folder as ZIP online. Bulk download shared Drive folders with subfolders in one file. Fast folder-to-ZIP for publicly shared links."
+  />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="author" content="Elephic Technologies" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Download Google Drive Folder as ZIP — Folder to ZIP in One Click" />
+  <meta
+    property="og:description"
+    content="Bulk download Google Drive folders with subfolders as one ZIP or TAR.GZ file."
+  />
+  <meta property="og:url" content="https://elephictech.com/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://elephictech.com/" />
+  <title>Download Google Drive Folder as ZIP — Folder to ZIP in One Click</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --err: #dc2626;
+      --err-bg: #fef2f2;
+      --warn-bg: #fffbeb;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
+      --radius: 1rem;
+      --radius-lg: 1.25rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 36rem;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 5vw, 3rem) 1.25rem 4rem;
+    }
+
+    /* Hero card */
+    .hero-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: clamp(1.5rem, 4vw, 1.75rem);
+      border: 1px solid var(--border);
+    }
+
+    .hero-card h1 {
+      font-size: clamp(1.375rem, 4.5vw, 1.625rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      margin: 0 0 0.5rem;
+      color: var(--text);
+    }
+
+    .subtitle {
+      margin: 0 0 1.25rem;
+      font-size: 0.9375rem;
+      color: var(--muted);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-shell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: #fafafa;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-shell:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      background: #fff;
+    }
+
+    .input-shell.is-invalid {
+      border-color: #fca5a5;
+    }
+
+    .input-shell.is-valid {
+      border-color: #6ee7b7;
+    }
+
+    #url {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+    }
+
+    #url::placeholder {
+      color: #9ca3af;
+    }
+
+    .valid-badge {
+      flex-shrink: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-right: 0.5rem;
+      border-radius: 9999px;
+      background: var(--success-bg);
+      color: var(--success);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .valid-badge.is-on {
+      display: flex;
+    }
+
+    .cta {
+      margin-top: 1.25rem;
+      width: 100%;
+      padding: 0.875rem 1.25rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: var(--primary);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.15s ease, transform 0.1s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .cta:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .cta:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    .cta:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .cta .spinner {
+      width: 1.125rem;
+      height: 1.125rem;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .cta.is-busy .spinner {
+      display: block;
+    }
+
+    .cta.is-busy .cta-label {
+      opacity: 0.95;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .file-trace {
+      margin: 0 0 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .file-trace[hidden] {
+      display: none !important;
+    }
+
+    .progress-block {
+      margin-top: 1.25rem;
+      display: none;
+    }
+
+    .progress-block.is-visible {
+      display: block;
+    }
+
+    .progress-track {
+      height: 0.5rem;
+      background: #e5e7eb;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      background: var(--primary);
+      transition: width 0.4s ease;
+    }
+
+    .progress-line1 {
+      margin: 0.625rem 0 0.125rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .progress-line2 {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .toast {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .toast.is-visible {
+      display: block;
+    }
+
+    .toast.ok {
+      background: var(--success-bg);
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .toast.err {
+      background: var(--err-bg);
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .toast.hint {
+      background: var(--warn-bg);
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    /* SEO block */
+    .seo-block {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .seo-block h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0 0 1rem;
+      color: var(--text);
+    }
+
+    .seo-block p {
+      margin: 0 0 1rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .seo-block h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 1.75rem 0 0.75rem;
+      color: var(--text);
+    }
+
+    .faq details {
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .faq summary {
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .faq summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq summary::after {
+      content: "+";
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .faq details[open] summary::after {
+      content: "−";
+    }
+
+    .faq .answer {
+      padding: 0 1rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .fine-print {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    .site-footer {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .footer-brand {
+      margin: 0 0 0.625rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.875rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .footer-links a,
+    .legal-section a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer-links a:hover,
+    .legal-section a:hover {
+      text-decoration: underline;
+    }
+
+    .legal-section {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+    }
+
+    .legal-section h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .legal-section p {
+      margin: 0;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main class="hero-card" aria-labelledby="hero-title">
+      <h1 id="hero-title">Download Google Drive Folder as ZIP</h1>
+      <p class="subtitle">
+        The fastest way to grab a whole shared folder—subfolders included—in one file. Works with links set to
+        <strong>Anyone with the link</strong>. No Google sign-in in your browser.
+      </p>
+
+      <label class="field-label" for="url">Paste Google Drive folder link</label>
+      <div id="inputShell" class="input-shell">
+        <input
+          type="text"
+          id="url"
+          name="folder_url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="https://drive.google.com/drive/folders/…"
+        />
+        <span id="validBadge" class="valid-badge" title="Valid folder link">✓</span>
+      </div>
+
+      <button type="button" class="cta" id="archiveBtn" disabled>
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="cta-label" id="ctaLabel">Download ZIP</span>
+      </button>
+
+      <div id="archiveProgressWrap" class="progress-block" role="status" aria-live="polite">
+        <p id="fileTraceSummary" class="file-trace" hidden></p>
+        <div class="progress-track">
+          <div class="progress-fill" id="archiveProgressFill"></div>
+        </div>
+        <p class="progress-line1" id="progressLine1"></p>
+        <p class="progress-line2" id="progressLine2"></p>
+      </div>
+
+      <div id="message" class="toast" role="alert"></div>
+    </main>
+
+    <article class="seo-block">
+      <h2>Download Google Drive Folder Online</h2>
+      <p>
+        Use this tool to <strong>download a Google Drive folder as ZIP</strong>—including nested folders—when the owner
+        has shared it publicly or as <strong>anyone with the link</strong>. It is built for
+        <strong>bulk download of Drive files</strong> from a <strong>shared Drive folder</strong> without clicking file
+        by file in the browser.
+      </p>
+      <p>
+        Whether you are backing up photos, pulling deliverables from a client folder, or archiving a project, turning a
+        <strong>Google Drive folder to ZIP</strong> keeps everything in one place.
+      </p>
+      <p>
+        Downloading directly from Google Drive can be frustrating for large shared folders: downloads may stall, fail, or
+        split into multiple ZIP parts. This app is built as a faster <strong>Google Drive folder downloader</strong> that
+        combines everything into <strong>one complete ZIP file</strong>, including <strong>folder-in-folder
+        structure</strong> and nested subfolders, so you get a clean single archive instead of fragmented downloads.
+      </p>
+
+      <h3>Frequently asked questions</h3>
+      <div class="faq">
+        <details>
+          <summary>How do I download a Google Drive folder as ZIP?</summary>
+          <div class="answer">
+            Copy the folder link from Drive (Share → Anyone with the link), paste it above, choose ZIP, and click
+            <strong>Download ZIP</strong>. The tool gathers files from subfolders and packs them into one archive.
+          </div>
+        </details>
+        <details>
+          <summary>Does this work for large folders?</summary>
+          <div class="answer">
+            Yes, many files are supported. Total time depends on how large the files are, how fast your internet is, and
+            Google’s servers. Very large folders may take a while—watch the progress bar until the download starts.
+          </div>
+        </details>
+        <details>
+          <summary>Is my data stored?</summary>
+          <div class="answer">
+            No permanent storage. Files are combined on your computer for this session and removed after the archive is
+            built. Your link is not sent to a third-party cloud service by this app.
+          </div>
+        </details>
+        <details>
+          <summary>Can I download nested folders and subfolders in one ZIP?</summary>
+          <div class="answer">
+            Yes. This Google Drive folder downloader keeps your folder hierarchy and includes nested subfolders in a
+            single archive, so you do not need to download each folder manually.
+          </div>
+        </details>
+        <details>
+          <summary>Why does Google Drive sometimes create multiple ZIP files?</summary>
+          <div class="answer">
+            Direct Drive downloads can split large folders into multiple parts or fail during long transfers. This app
+            is designed to combine files into one clean ZIP or TAR.GZ download for easier backup and sharing.
+          </div>
+        </details>
+        <details>
+          <summary>Do I need to install software to bulk download Drive files?</summary>
+          <div class="answer">
+            No install required. Paste a shared folder link and download online in your browser. It is built for bulk
+            Google Drive file download with one click.
+          </div>
+        </details>
+        <details>
+          <summary>Can I use this for client delivery folders and media backups?</summary>
+          <div class="answer">
+            Yes. Teams use this tool for photo backup, video folder download, project handoff folders, and client
+            deliverables where a single archive is easier to transfer and store.
+          </div>
+        </details>
+      </div>
+
+      <p class="fine-print">
+        Not affiliated with Google. Drive, Google Drive, and related marks are trademarks of Google LLC.
+      </p>
+
+      <footer class="site-footer" aria-label="Site footer">
+        <p class="footer-brand">A product of Elephic Technologies</p>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="/about.html">About Us</a>
+          <a href="/privacy-policy.html">Privacy Policy</a>
+          <a href="/terms-and-conditions.html">Terms</a>
+          <a href="/ads-disclosure.html">Ads Disclosure</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </footer>
+    </article>
+  </div>
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "GD Downloader",
+          "url": "https://elephictech.com/",
+          "description": "Download Google Drive folders as ZIP or TAR.GZ with nested subfolders.",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Elephic Technologies",
+            "url": "https://elephictech.com/"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do I download a Google Drive folder as ZIP?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Copy the shared Google Drive folder link, paste it into the tool, choose ZIP, and start download. The app fetches files from nested folders and creates one archive."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I download nested folders and subfolders in one ZIP?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. The downloader keeps folder hierarchy and includes nested subfolders in a single archive."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does Google Drive sometimes create multiple ZIP files?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Large direct Drive downloads may split into multiple parts or fail. This tool is designed to combine everything into one clean archive."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+
+  <script>
+    (function () {
+      var urlInput = document.getElementById("url");
+      var archiveBtn = document.getElementById("archiveBtn");
+      var ctaLabel = document.getElementById("ctaLabel");
+      var messageEl = document.getElementById("message");
+      var inputShell = document.getElementById("inputShell");
+      var validBadge = document.getElementById("validBadge");
+      var archiveProgressWrap = document.getElementById("archiveProgressWrap");
+      var archiveProgressFill = document.getElementById("archiveProgressFill");
+      var progressLine1 = document.getElementById("progressLine1");
+      var progressLine2 = document.getElementById("progressLine2");
+      var fileTraceSummary = document.getElementById("fileTraceSummary");
+
+      var apiKeyOk = false;
+      var healthChecked = false;
+      function syncCtaLabel() {
+        ctaLabel.textContent = "Download ZIP";
+      }
+
+      function showMessage(text, kind) {
+        if (!text) {
+          messageEl.className = "toast";
+          messageEl.textContent = "";
+          messageEl.classList.remove("is-visible");
+          return;
+        }
+        messageEl.textContent = text;
+        messageEl.className = "toast is-visible " + (kind || "");
+      }
+
+      function hideMessage() {
+        showMessage("", "");
+      }
+
+      function extractFolderId(raw) {
+        var s = (raw || "").trim();
+        if (!s) return null;
+        var m = s.match(/\/drive\/folders\/([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        m = s.match(/folders\/([a-zA-Z0-9_-]+)/);
+        if (m) return m[1];
+        if (/^[a-zA-Z0-9_-]{25,}$/.test(s) && !s.includes("/")) {
+          return s;
+        }
+        return null;
+      }
+
+      function parseFilename(cd) {
+        if (!cd) return null;
+        var m = cd.match(/filename\*=UTF-8''([^;]+)/i);
+        if (m) return decodeURIComponent(m[1].trim());
+        m = cd.match(/filename="([^"]+)"/i);
+        if (m) return m[1];
+        m = cd.match(/filename=([^;\s]+)/i);
+        if (m) return m[1].replace(/^["']|["']$/g, "");
+        return null;
+      }
+
+      function checkHealth() {
+        fetch("/api/health", { method: "GET" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("health");
+            return r.json();
+          })
+          .then(function (data) {
+            healthChecked = true;
+            apiKeyOk = !!data.api_key_configured;
+            updateState();
+          })
+          .catch(function () {
+            healthChecked = true;
+            apiKeyOk = false;
+            updateState();
+          });
+      }
+
+      function updateState() {
+        var raw = urlInput.value.trim();
+        var folderId = extractFolderId(raw);
+        var valid = !!folderId;
+
+        validBadge.classList.toggle("is-on", valid);
+        inputShell.classList.toggle("is-valid", valid && raw.length > 0);
+        inputShell.classList.toggle("is-invalid", raw.length > 0 && !valid);
+
+        archiveBtn.disabled = !valid || !apiKeyOk || !healthChecked;
+        syncCtaLabel();
+
+        if (healthChecked && !apiKeyOk) {
+          if (valid) {
+            showMessage("The service isn’t available right now. Try again in a moment.", "hint");
+          } else {
+            hideMessage();
+          }
+        } else if (raw && !valid) {
+          showMessage("That doesn’t look like a folder link. Use a URL containing …/drive/folders/…", "err");
+        } else {
+          hideMessage();
+        }
+      }
+
+      function num(x) {
+        if (x == null || x === "") return 0;
+        var n = Number(x);
+        return isNaN(n) ? 0 : n;
+      }
+
+      function fmtBytes(n) {
+        n = num(n);
+        if (n <= 0) return "";
+        var gb = n / (1024 * 1024 * 1024);
+        if (gb >= 1) return gb.toFixed(1) + " GB";
+        var mb = n / (1024 * 1024);
+        if (mb >= 1) return Math.round(mb) + " MB";
+        return Math.round(n / 1024) + " KB";
+      }
+
+      function buildTraceSummary(s) {
+        var total = num(s.total);
+        if (total <= 0) return { show: false, text: "" };
+        var tb = num(s.total_bytes);
+        var sf = num(s.sized_files);
+        var bits = ["Found " + total + " file" + (total === 1 ? "" : "s")];
+        if (tb > 0) {
+          if (sf < total) {
+            bits.push("~ " + fmtBytes(tb) + " known (" + sf + " of " + total + " sizes from Drive)");
+          } else {
+            bits.push("About " + fmtBytes(tb) + " total");
+          }
+        }
+        return { show: true, text: bits.join(" · ") };
+      }
+
+      function buildProgressSubline(s, pct) {
+        var total = num(s.total);
+        var phase = s.phase || "";
+        if (phase === "downloading" && total > 0) {
+          var c = num(s.completed);
+          var tb = num(s.total_bytes);
+          var bd = num(s.bytes_downloaded);
+          var line =
+            "Downloading " + c + " of " + total + " file" + (total === 1 ? "" : "s");
+          if (tb > 0) {
+            line += " (" + fmtBytes(bd) + " of " + (num(s.sized_files) < total ? "~" : "") + fmtBytes(tb) + ")";
+          }
+          if (pct >= 3 && pct < 100) line += " · " + Math.round(pct) + "% complete";
+          return line;
+        }
+        if (phase === "packing" && total > 0) {
+          var p = num(s.pack_current);
+          var line2 =
+            "Adding file " + p + " of " + total + " to the archive";
+          if (pct >= 3 && pct < 100) line2 += " · " + Math.round(pct) + "% complete";
+          return line2;
+        }
+        if (pct >= 3 && pct < 100) return Math.round(pct) + "% complete";
+        return "";
+      }
+
+      function friendlyProgress(s) {
+        var pct = Math.min(100, Math.max(0, Number(s.pct) || 0));
+        var line1 = "";
+        if (s.phase === "queued" || s.phase === "listing") {
+          line1 = "Preparing your download…";
+        } else if (s.phase === "downloading") {
+          line1 = "Downloading files…";
+        } else if (s.phase === "packing") {
+          line1 = "Building your ZIP…";
+        } else if (s.phase === "done") {
+          line1 = "Almost done…";
+        } else {
+          line1 = "Working…";
+        }
+        return { pct: pct, line1: line1 };
+      }
+
+      function applyProgressUI(s) {
+        var u = friendlyProgress(s);
+        archiveProgressFill.style.width = u.pct + "%";
+        progressLine1.textContent = u.line1;
+        var trace = buildTraceSummary(s);
+        if (trace.show) {
+          fileTraceSummary.hidden = false;
+          fileTraceSummary.textContent = trace.text;
+        } else if (s.phase === "queued" || s.phase === "listing") {
+          fileTraceSummary.hidden = true;
+          fileTraceSummary.textContent = "";
+        }
+        var sub = buildProgressSubline(s, u.pct);
+        progressLine2.textContent = sub || (u.pct >= 3 && u.pct < 100 ? Math.round(u.pct) + "% complete" : "");
+      }
+
+      archiveBtn.addEventListener("click", function () {
+        var folderId = extractFolderId(urlInput.value);
+        if (!folderId || !apiKeyOk) return;
+        archiveBtn.classList.add("is-busy");
+        archiveBtn.disabled = true;
+        archiveProgressWrap.classList.add("is-visible");
+        fileTraceSummary.hidden = true;
+        fileTraceSummary.textContent = "";
+        archiveProgressFill.style.width = "0%";
+        progressLine1.textContent = "Starting direct download stream…";
+        progressLine2.textContent = "";
+        hideMessage();
+
+        var streamUrl =
+          "/api/folder-archive/stream?url_or_id=" + encodeURIComponent(urlInput.value.trim());
+        var aStream = document.createElement("a");
+        aStream.href = streamUrl;
+        aStream.rel = "noopener";
+        aStream.style.display = "none";
+        document.body.appendChild(aStream);
+        aStream.click();
+        aStream.remove();
+        showMessage("Streaming ZIP request sent. Download should begin shortly.", "ok");
+        archiveBtn.classList.remove("is-busy");
+        archiveProgressWrap.classList.remove("is-visible");
+        updateState();
+      });
+
+      function onInput() {
+        updateState();
+      }
+
+      urlInput.addEventListener("input", onInput);
+      urlInput.addEventListener("paste", function () {
+        requestAnimationFrame(onInput);
+      });
+
+      syncCtaLabel();
+      checkHealth();
+      updateState();
+    })();
+  </script>
+</body>
+</html>
