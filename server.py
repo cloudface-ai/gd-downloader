@@ -809,6 +809,17 @@ def index():
 @app.route("/<path:page>")
 def static_pages(page: str):
     allowed = {
+        "blogs.html",
+        "blog-download-google-drive-folder-as-zip.html",
+        "blog-fix-google-drive-multiple-zip-files.html",
+        "blog-bulk-download-shared-drive-files.html",
+        "blog-download-nested-folders-single-archive.html",
+        "blog-speed-up-google-drive-folder-downloads.html",
+        "blog-secure-shared-drive-downloads.html",
+        "blog-backup-client-deliverables-from-drive.html",
+        "blog-troubleshoot-stalled-drive-downloads.html",
+        "blog-self-host-drive-downloader-on-vps.html",
+        "blog-google-drive-downloader-for-teams.html",
         "about.html",
         "privacy-policy.html",
         "terms-and-conditions.html",
