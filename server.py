@@ -21,6 +21,9 @@ except ImportError:
     pass
 
 import gzip
+import hmac
+import html
+import json
 import logging
 import os
 import random
@@ -31,7 +34,9 @@ import tarfile
 import tempfile
 import threading
 import time
+import uuid
 import zipfile
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Iterator, TypeVar
 
@@ -809,17 +814,8 @@ def index():
 @app.route("/<path:page>")
 def static_pages(page: str):
     allowed = {
+        "blog-admin.html",
         "blogs.html",
-        "blog-download-google-drive-folder-as-zip.html",
-        "blog-fix-google-drive-multiple-zip-files.html",
-        "blog-bulk-download-shared-drive-files.html",
-        "blog-download-nested-folders-single-archive.html",
-        "blog-speed-up-google-drive-folder-downloads.html",
-        "blog-secure-shared-drive-downloads.html",
-        "blog-backup-client-deliverables-from-drive.html",
-        "blog-troubleshoot-stalled-drive-downloads.html",
-        "blog-self-host-drive-downloader-on-vps.html",
-        "blog-google-drive-downloader-for-teams.html",
         "about.html",
         "privacy-policy.html",
         "terms-and-conditions.html",
@@ -831,12 +827,17 @@ def static_pages(page: str):
         "sitemap.xml",
         "ads.txt",
     }
-    if page not in allowed:
+    is_dynamic_blog = bool(re.fullmatch(r"blog-[a-z0-9-]+\.html", page))
+    if page not in allowed and not is_dynamic_blog:
         return jsonify({"error": "Not found"}), 404
     root = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(root, page)
     if not os.path.exists(path):
         return jsonify({"error": "Not found"}), 404
+    if page == "blog-admin.html":
+        auth_err = _require_admin_basic_auth()
+        if auth_err is not None:
+            return auth_err
     if page.endswith(".xml"):
         mime = "application/xml"
     elif page.endswith(".png") or page.endswith(".ico"):
@@ -846,6 +847,403 @@ def static_pages(page: str):
     else:
         mime = "text/html"
     return send_file(path, mimetype=mime)
+
+
+def _require_admin_basic_auth():
+    user_expected = os.environ.get("BLOG_ADMIN_USER", "driveimgtojpg")
+    pass_expected = os.environ.get("BLOG_ADMIN_PASS", "Adm!n@1@$$32#")
+    auth = request.authorization
+    ok = bool(
+        auth
+        and hmac.compare_digest(auth.username or "", user_expected)
+        and hmac.compare_digest(auth.password or "", pass_expected)
+    )
+    if ok:
+        return None
+    resp = Response("Authentication required.", 401)
+    resp.headers["WWW-Authenticate"] = 'Basic realm="GD Blog Admin"'
+    return resp
+
+
+def _blog_slug(raw: str) -> str:
+    s = (raw or "").strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return re.sub(r"-{2,}", "-", s)[:80] or f"post-{int(time.time())}"
+
+
+def _blog_index_path() -> str:
+    root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(root, "blog-index.json")
+
+
+def _blog_media_dir() -> str:
+    root = os.path.dirname(os.path.abspath(__file__))
+    p = os.path.join(root, "blog-media")
+    os.makedirs(p, exist_ok=True)
+    return p
+
+
+def _load_blog_index() -> list[dict]:
+    p = _blog_index_path()
+    if not os.path.exists(p):
+        return []
+    try:
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return data
+    except Exception:
+        return []
+    return []
+
+
+def _save_blog_index(items: list[dict]) -> None:
+    with open(_blog_index_path(), "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=True, indent=2)
+
+
+def _build_blog_html(
+    *,
+    title: str,
+    description: str,
+    keywords: str,
+    category: str,
+    tags: str,
+    author_name: str,
+    published_at: int,
+    featured_image: str,
+    links_html: str,
+    slug: str,
+    content_html: str,
+) -> str:
+    canonical = f"https://drive.imgtojpg.org/blog-{slug}.html"
+    title_e = html.escape(title)
+    desc_e = html.escape(description)
+    kw_e = html.escape(keywords)
+    cat_e = html.escape(category)
+    tags_e = html.escape(tags)
+    author_e = html.escape(author_name or "Elephic Team")
+    dt_str = datetime.utcfromtimestamp(max(1, int(published_at))).strftime("%B %d, %Y")
+    feat_e = html.escape(featured_image)
+    links_block = ""
+    if links_html.strip():
+        links_block = f'<h2>Useful Links</h2>\\n      <div>{links_html}</div>'
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="{desc_e}" />
+  <meta name="keywords" content="{kw_e}" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="Elephic Technologies" />
+  <meta name="publisher" content="Elephic Technologies" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{title_e}" />
+  <meta property="og:description" content="{desc_e}" />
+  <meta property="og:url" content="{canonical}" />
+  <meta property="og:image" content="{feat_e}" />
+  <link rel="canonical" href="{canonical}" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <title>{title_e} | GD Downloader Blog</title>
+  <style>
+    body {{ margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; background: #f3f4f6; color: #111827; }}
+    .page {{ max-width: 52rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }}
+    .card {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; }}
+    h1, h2, h3, h4 {{ line-height: 1.3; color: #111827; }}
+    p, li {{ line-height: 1.78; color: #374151; }}
+    a {{ color: #2563eb; text-decoration: none; }}
+    .meta {{ color: #6b7280; font-size: .9rem; margin-bottom: 1rem; }}
+    .nav {{ margin-top: 1.3rem; display: flex; gap: .9rem; flex-wrap: wrap; font-size: .95rem; }}
+    .cover {{ width: 100%; border-radius: .8rem; margin: .75rem 0 1rem; }}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article class="card">
+      <h1>{title_e}</h1>
+      <p class="meta">Via {author_e} · Published {dt_str} · Category: {cat_e} · Tags: {tags_e}</p>
+      {"<img class='cover' src='" + feat_e + "' alt='" + title_e + " | drive.imgtojpg.org' />" if feat_e else ""}
+      {content_html}
+      {links_block}
+      <p class="nav"><a href="/blogs.html">All Blogs</a> <a href="/">Home</a> <a href="/contact.html">Contact</a></p>
+    </article>
+  </main>
+</body>
+</html>
+"""
+
+
+def _upsert_blog_in_hub(title: str, slug: str, description: str) -> None:
+    root = os.path.dirname(os.path.abspath(__file__))
+    hub = os.path.join(root, "blogs.html")
+    if not os.path.exists(hub):
+        return
+    with open(hub, "r", encoding="utf-8") as f:
+        txt = f.read()
+    item = (
+        f'        <div class="item"><a href="/blog-{slug}.html">{html.escape(title)}</a>'
+        f"<p>{html.escape(description)}</p></div>\n"
+    )
+    top_marker = "      <div class=\"list\">\n"
+    txt = re.sub(
+        rf'\n?\s*<div class="item"><a href="/blog-{re.escape(slug)}\.html">.*?</div>\n',
+        "\n",
+        txt,
+        flags=re.S,
+    )
+    if top_marker in txt:
+        txt = txt.replace(top_marker, top_marker + item, 1)
+        with open(hub, "w", encoding="utf-8") as f:
+            f.write(txt)
+
+
+def _upsert_blog_in_sitemap(slug: str) -> None:
+    root = os.path.dirname(os.path.abspath(__file__))
+    sm = os.path.join(root, "sitemap.xml")
+    if not os.path.exists(sm):
+        return
+    with open(sm, "r", encoding="utf-8") as f:
+        txt = f.read()
+    loc = f"https://drive.imgtojpg.org/blog-{slug}.html"
+    txt = re.sub(
+        rf'\s*<url><loc>{re.escape(loc)}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n?',
+        "",
+        txt,
+    )
+    row = (
+        f"  <url><loc>{loc}</loc><changefreq>monthly</changefreq>"
+        f"<priority>0.7</priority></url>\n"
+    )
+    txt = txt.replace("</urlset>", row + "</urlset>")
+    with open(sm, "w", encoding="utf-8") as f:
+        f.write(txt)
+
+
+def _delete_blog_from_hub_and_sitemap(slug: str) -> None:
+    root = os.path.dirname(os.path.abspath(__file__))
+    hub = os.path.join(root, "blogs.html")
+    if os.path.exists(hub):
+        with open(hub, "r", encoding="utf-8") as f:
+            txt = f.read()
+        txt = re.sub(
+            rf'\n?\s*<div class="item"><a href="/blog-{re.escape(slug)}\.html">.*?</div>\n',
+            "\n",
+            txt,
+            flags=re.S,
+        )
+        with open(hub, "w", encoding="utf-8") as f:
+            f.write(txt)
+    sm = os.path.join(root, "sitemap.xml")
+    if os.path.exists(sm):
+        with open(sm, "r", encoding="utf-8") as f:
+            txt = f.read()
+        loc = f"https://drive.imgtojpg.org/blog-{slug}.html"
+        txt = re.sub(
+            rf'\s*<url><loc>{re.escape(loc)}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n?',
+            "",
+            txt,
+        )
+        with open(sm, "w", encoding="utf-8") as f:
+            f.write(txt)
+
+
+@app.route("/blog-media/<path:name>", methods=["GET"])
+def blog_media(name: str):
+    d = _blog_media_dir()
+    safe_name = os.path.basename(name)
+    p = os.path.join(d, safe_name)
+    if not os.path.exists(p):
+        return jsonify({"error": "Not found"}), 404
+    ext = os.path.splitext(safe_name)[1].lower()
+    mime = "application/octet-stream"
+    if ext in (".jpg", ".jpeg"):
+        mime = "image/jpeg"
+    elif ext == ".png":
+        mime = "image/png"
+    elif ext == ".webp":
+        mime = "image/webp"
+    elif ext == ".gif":
+        mime = "image/gif"
+    return send_file(p, mimetype=mime)
+
+
+@app.route("/api/admin/blog/upload-image", methods=["POST", "OPTIONS"])
+def admin_blog_upload_image():
+    if request.method == "OPTIONS":
+        return ("", 204)
+    auth_err = _require_admin_basic_auth()
+    if auth_err is not None:
+        return auth_err
+    f = request.files.get("image")
+    if f is None or not f.filename:
+        return jsonify({"error": "No file uploaded"}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".webp", ".gif"):
+        return jsonify({"error": "Unsupported image type"}), 400
+    name = f"{int(time.time())}-{uuid.uuid4().hex[:8]}{ext}"
+    out = os.path.join(_blog_media_dir(), name)
+    f.save(out)
+    return jsonify({"ok": True, "url": f"/blog-media/{name}"})
+
+
+@app.route("/api/admin/blog/list", methods=["GET"])
+def admin_blog_list():
+    auth_err = _require_admin_basic_auth()
+    if auth_err is not None:
+        return auth_err
+    items = sorted(_load_blog_index(), key=lambda x: x.get("updated_at", 0), reverse=True)
+    return jsonify({"ok": True, "items": items})
+
+
+@app.route("/api/admin/blog/<slug>", methods=["GET", "PUT", "DELETE", "OPTIONS"])
+def admin_blog_item(slug: str):
+    if request.method == "OPTIONS":
+        return ("", 204)
+    auth_err = _require_admin_basic_auth()
+    if auth_err is not None:
+        return auth_err
+    items = _load_blog_index()
+    i = next((idx for idx, it in enumerate(items) if it.get("slug") == slug), None)
+    if i is None:
+        return jsonify({"error": "Blog not found"}), 404
+    item = items[i]
+
+    if request.method == "GET":
+        return jsonify({"ok": True, "item": item})
+
+    if request.method == "DELETE":
+        root = os.path.dirname(os.path.abspath(__file__))
+        p = os.path.join(root, f"blog-{slug}.html")
+        try:
+            if os.path.exists(p):
+                os.unlink(p)
+        except OSError:
+            pass
+        _delete_blog_from_hub_and_sitemap(slug)
+        items.pop(i)
+        _save_blog_index(items)
+        return jsonify({"ok": True})
+
+    body = request.get_json(silent=True) or {}
+    title = str(body.get("title") or "").strip()
+    description = str(body.get("description") or "").strip()
+    content_html = str(body.get("content_html") or "").strip()
+    if not title or not description or not content_html:
+        return jsonify({"error": "Missing title/description/content_html"}), 400
+    item.update(
+        {
+            "title": title,
+            "description": description,
+            "keywords": str(body.get("keywords") or "").strip(),
+            "category": str(body.get("category") or "Uncategorized").strip(),
+            "tags": str(body.get("tags") or "").strip(),
+            "author_name": str(body.get("author_name") or item.get("author_name") or "Elephic Team").strip(),
+            "featured_image": str(body.get("featured_image") or "").strip(),
+            "links_html": str(body.get("links_html") or "").strip(),
+            "content_html": content_html,
+            "updated_at": int(time.time()),
+        }
+    )
+    html_doc = _build_blog_html(
+        title=item["title"],
+        description=item["description"],
+        keywords=item["keywords"],
+        category=item["category"],
+        tags=item["tags"],
+        author_name=item["author_name"],
+        published_at=int(item.get("created_at") or int(time.time())),
+        featured_image=item["featured_image"],
+        links_html=item["links_html"],
+        slug=slug,
+        content_html=item["content_html"],
+    )
+    root = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(root, f"blog-{slug}.html"), "w", encoding="utf-8") as f:
+        f.write(html_doc)
+    _upsert_blog_in_hub(item["title"], slug, item["description"])
+    _upsert_blog_in_sitemap(slug)
+    _save_blog_index(items)
+    return jsonify({"ok": True, "url": f"/blog-{slug}.html"})
+
+
+@app.route("/api/admin/blog/create", methods=["POST", "OPTIONS"])
+def admin_blog_create():
+    if request.method == "OPTIONS":
+        return ("", 204)
+    auth_err = _require_admin_basic_auth()
+    if auth_err is not None:
+        return auth_err
+    body = request.get_json(silent=True) or {}
+    required = ["title", "description", "content_html"]
+    for k in required:
+        if not str(body.get(k) or "").strip():
+            return jsonify({"error": f"Missing {k}"}), 400
+
+    token_required = os.environ.get("BLOG_ADMIN_TOKEN", "").strip()
+    if token_required:
+        token = str(body.get("token") or "").strip()
+        if token != token_required:
+            return jsonify({"error": "Invalid admin token"}), 403
+
+    title = str(body.get("title") or "").strip()
+    description = str(body.get("description") or "").strip()
+    keywords = str(body.get("keywords") or "").strip()
+    category = str(body.get("category") or "Uncategorized").strip()
+    tags = str(body.get("tags") or "").strip()
+    author_name = str(body.get("author_name") or "Elephic Team").strip()
+    featured = str(body.get("featured_image") or "").strip()
+    links_html = str(body.get("links_html") or "").strip()
+    slug = _blog_slug(str(body.get("slug") or title))
+    content_html = str(body.get("content_html") or "").strip()
+    filename = f"blog-{slug}.html"
+
+    root = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(root, filename)
+    if os.path.exists(path):
+        return jsonify({"error": f"Blog already exists: {filename}"}), 409
+
+    html_doc = _build_blog_html(
+        title=title,
+        description=description,
+        keywords=keywords,
+        category=category,
+        tags=tags,
+        author_name=author_name,
+        published_at=int(time.time()),
+        featured_image=featured,
+        links_html=links_html,
+        slug=slug,
+        content_html=content_html,
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html_doc)
+
+    now = int(time.time())
+    items = _load_blog_index()
+    items.insert(
+        0,
+        {
+            "slug": slug,
+            "title": title,
+            "description": description,
+            "keywords": keywords,
+            "category": category,
+            "tags": tags,
+            "author_name": author_name,
+            "featured_image": featured,
+            "links_html": links_html,
+            "content_html": content_html,
+            "created_at": now,
+            "updated_at": now,
+        },
+    )
+    _save_blog_index(items)
+    _upsert_blog_in_hub(title, slug, description)
+    _upsert_blog_in_sitemap(slug)
+    return jsonify({"ok": True, "slug": slug, "url": f"/blog-{slug}.html"})
 
 
 @app.route("/api/health", methods=["GET"])

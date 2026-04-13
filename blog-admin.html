@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Blog Editor | GD Downloader</title>
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; background: #f3f4f6; color: #111827; }
+    .page { max-width: 82rem; margin: 0 auto; padding: 1.25rem; display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: .8rem; padding: 1rem; }
+    h1, h2, h3 { margin: 0 0 .8rem; }
+    label { display: block; font-size: .82rem; font-weight: 600; margin: .7rem 0 .35rem; color: #374151; }
+    input, textarea, select { width: 100%; border: 1px solid #d1d5db; border-radius: .6rem; padding: .62rem .7rem; font: inherit; }
+    textarea { min-height: 220px; resize: vertical; line-height: 1.55; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    .btn { background: #2563eb; color: #fff; border: 0; border-radius: .6rem; padding: .65rem .9rem; font-weight: 600; cursor: pointer; }
+    .btn.secondary { background: #111827; }
+    .btn.danger { background: #b91c1c; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .muted { color: #6b7280; font-size: .85rem; }
+    .status { margin-top: .6rem; font-size: .9rem; }
+    .ok { color: #065f46; }
+    .err { color: #991b1b; }
+    .small { font-size: .78rem; color: #6b7280; }
+    .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .65rem; }
+    .list { max-height: 520px; overflow: auto; border-top: 1px solid #e5e7eb; margin-top: .6rem; padding-top: .6rem; }
+    .item { border: 1px solid #e5e7eb; border-radius: .65rem; padding: .6rem; margin-bottom: .5rem; }
+    .item h4 { margin: 0 0 .3rem; font-size: .95rem; }
+    .item p { margin: 0; font-size: .8rem; color: #6b7280; }
+    .item .row2 { display: flex; gap: .4rem; margin-top: .45rem; }
+    .item .row2 button { font-size: .75rem; padding: .4rem .55rem; border: 0; border-radius: .4rem; cursor: pointer; }
+    .item .row2 .edit { background: #1d4ed8; color: #fff; }
+    .item .row2 .del { background: #b91c1c; color: #fff; }
+    .preview { margin-top: .4rem; font-size: .8rem; color: #2563eb; word-break: break-all; }
+    @media (max-width: 980px) { .page { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="card">
+      <h1>Add Post</h1>
+      <p class="muted">Write, upload cover image, add links, and publish/update posts directly.</p>
+
+      <label for="title">Add title</label>
+      <input id="title" placeholder="Post title" />
+
+      <div class="row">
+        <div>
+          <label for="slug">Slug (optional)</label>
+          <input id="slug" placeholder="auto-from-title" />
+        </div>
+        <div>
+          <label for="category">Category</label>
+          <input id="category" placeholder="Insights" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="authorName">Posted by (Via X Person)</label>
+          <input id="authorName" placeholder="Vinod" />
+        </div>
+        <div>
+          <label for="tags">Tags</label>
+          <input id="tags" placeholder="tag1, tag2, tag3" />
+        </div>
+      </div>
+
+      <label for="description">Meta description</label>
+      <textarea id="description" style="min-height:90px" placeholder="One clear summary for search results."></textarea>
+
+      <div class="row">
+        <div>
+          <label for="keywords">SEO keywords</label>
+          <input id="keywords" placeholder="keyword1, keyword2, keyword3" />
+        </div>
+        <div>
+          <label for="links">Links HTML (internal/external)</label>
+          <input id="links" placeholder="<a href='/blogs.html'>Blogs</a> | <a href='https://example.com'>Ref</a>" />
+        </div>
+      </div>
+
+      <label for="featured">Featured image (local upload)</label>
+      <div class="row">
+        <input id="featuredFile" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" />
+        <button class="btn secondary" id="uploadBtn" type="button">Upload Image</button>
+      </div>
+      <input id="featured" placeholder="Uploaded path appears here (/blog-media/...)" />
+      <div id="imagePreview" class="preview"></div>
+
+      <label for="content">Content (HTML allowed: h2, h3, h4, p, ul, li, a, details)</label>
+      <textarea id="content" placeholder="<h2>Intro</h2><p>Write your article...</p>"></textarea>
+      <p class="small">Tip: Use one topic per post. Include H2/H3/H4 and FAQs for SEO-friendly structure.</p>
+    </section>
+
+    <aside class="card">
+      <h2>Publish</h2>
+      <label for="token">Admin token (if enabled)</label>
+      <input id="token" type="password" placeholder="BLOG_ADMIN_TOKEN" />
+      <div class="actions">
+        <button class="btn" id="publishBtn">Publish New</button>
+        <button class="btn secondary" id="updateBtn" type="button">Update Post</button>
+        <button class="btn danger" id="deleteBtn" type="button">Delete Post</button>
+      </div>
+      <div id="status" class="status muted">Status: Draft</div>
+      <p class="small">Sitemap auto-updates. New posts appear on top. Cover image alt automatically includes website name.</p>
+      <hr />
+      <h3>Posts</h3>
+      <button class="btn secondary" id="refreshBtn" type="button">Refresh Posts</button>
+      <div id="postList" class="list"></div>
+      <hr />
+      <h3>Quick Links</h3>
+      <p class="small"><a href="/blogs.html">Open Blog Hub</a></p>
+      <p class="small"><a href="/">Back to Home</a></p>
+    </aside>
+  </div>
+
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      var btn = $("publishBtn");
+      var updateBtn = $("updateBtn");
+      var deleteBtn = $("deleteBtn");
+      var uploadBtn = $("uploadBtn");
+      var refreshBtn = $("refreshBtn");
+      var status = $("status");
+      var selectedSlug = null;
+      var apiBase = window.location.protocol + "//" + window.location.host;
+      function apiUrl(path) { return apiBase + path; }
+
+      function setStatus(text, kind) {
+        status.className = "status " + (kind || "muted");
+        status.textContent = text;
+      }
+
+      function payload() {
+        return {
+          title: $("title").value.trim(),
+          slug: $("slug").value.trim(),
+          description: $("description").value.trim(),
+          keywords: $("keywords").value.trim(),
+          category: $("category").value.trim() || "Uncategorized",
+          tags: $("tags").value.trim(),
+          author_name: $("authorName").value.trim() || "Elephic Team",
+          featured_image: $("featured").value.trim(),
+          links_html: $("links").value.trim(),
+          content_html: $("content").value.trim(),
+          token: $("token").value.trim()
+        };
+      }
+
+      function fillForm(it) {
+        selectedSlug = it.slug;
+        $("title").value = it.title || "";
+        $("slug").value = it.slug || "";
+        $("description").value = it.description || "";
+        $("keywords").value = it.keywords || "";
+        $("category").value = it.category || "";
+        $("tags").value = it.tags || "";
+        $("authorName").value = it.author_name || "";
+        $("featured").value = it.featured_image || "";
+        $("links").value = it.links_html || "";
+        $("content").value = it.content_html || "";
+        $("imagePreview").textContent = it.featured_image ? ("Current image: " + it.featured_image) : "";
+        setStatus("Loaded post: " + it.slug, "ok");
+      }
+
+      function renderList(items) {
+        var root = $("postList");
+        root.innerHTML = "";
+        if (!items || !items.length) {
+          root.innerHTML = "<p class='small'>No posts in index yet.</p>";
+          return;
+        }
+        items.forEach(function (it) {
+          var d = document.createElement("div");
+          d.className = "item";
+          d.innerHTML =
+            "<h4>" + (it.title || it.slug) + "</h4>" +
+            "<p>/blog-" + it.slug + ".html</p>" +
+            "<div class='row2'>" +
+              "<button class='edit' type='button'>Edit</button>" +
+              "<button class='del' type='button'>Delete</button>" +
+            "</div>";
+          d.querySelector(".edit").addEventListener("click", function () { fillForm(it); });
+          d.querySelector(".del").addEventListener("click", function () {
+            if (!confirm("Delete blog " + it.slug + "?")) return;
+            fetch("/api/admin/blog/" + encodeURIComponent(it.slug), { method: "DELETE" })
+              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+              .then(function (res) {
+                if (!res.ok) throw new Error(res.body.error || "Delete failed");
+                setStatus("Deleted: " + it.slug, "ok");
+                selectedSlug = null;
+                loadList();
+              })
+              .catch(function (e) { setStatus(e.message || String(e), "err"); });
+          });
+          root.appendChild(d);
+        });
+      }
+
+      function loadList() {
+        fetch(apiUrl("/api/admin/blog/list"))
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.body.error || "Could not load posts");
+            renderList(res.body.items || []);
+          })
+          .catch(function (e) {
+            setStatus(e.message || String(e), "err");
+          });
+      }
+
+      uploadBtn.addEventListener("click", function () {
+        var f = $("featuredFile").files[0];
+        if (!f) {
+          setStatus("Choose an image first.", "err");
+          return;
+        }
+        var fd = new FormData();
+        fd.append("image", f);
+        uploadBtn.disabled = true;
+        setStatus("Uploading image...", "muted");
+        fetch(apiUrl("/api/admin/blog/upload-image"), { method: "POST", body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.body.error || "Upload failed");
+            $("featured").value = res.body.url;
+            $("imagePreview").textContent = "Uploaded: " + res.body.url;
+            setStatus("Image uploaded.", "ok");
+          })
+          .catch(function (e) {
+            setStatus(e.message || String(e), "err");
+          })
+          .finally(function () {
+            uploadBtn.disabled = false;
+          });
+      });
+
+      btn.addEventListener("click", function () {
+        var p = payload();
+        if (!p.title || !p.description || !p.content_html) {
+          setStatus("Please fill title, description, and content.", "err");
+          return;
+        }
+        btn.disabled = true;
+        setStatus("Publishing...", "muted");
+        fetch(apiUrl("/api/admin/blog/create"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(p)
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.body.error || "Publish failed");
+            setStatus("Published: " + res.body.url, "ok");
+            selectedSlug = res.body.slug;
+            loadList();
+          })
+          .catch(function (e) {
+            setStatus(e.message || String(e), "err");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      updateBtn.addEventListener("click", function () {
+        var slug = selectedSlug || $("slug").value.trim();
+        if (!slug) {
+          setStatus("Select a post from the list or fill slug to update.", "err");
+          return;
+        }
+        var p = payload();
+        updateBtn.disabled = true;
+        setStatus("Updating...", "muted");
+        fetch(apiUrl("/api/admin/blog/" + encodeURIComponent(slug)), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(p)
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.body.error || "Update failed");
+            setStatus("Updated: /blog-" + slug + ".html", "ok");
+            selectedSlug = slug;
+            loadList();
+          })
+          .catch(function (e) { setStatus(e.message || String(e), "err"); })
+          .finally(function () { updateBtn.disabled = false; });
+      });
+
+      deleteBtn.addEventListener("click", function () {
+        var slug = selectedSlug || $("slug").value.trim();
+        if (!slug) {
+          setStatus("Select a post to delete.", "err");
+          return;
+        }
+        if (!confirm("Delete blog " + slug + "?")) return;
+        fetch(apiUrl("/api/admin/blog/" + encodeURIComponent(slug)), { method: "DELETE" })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.body.error || "Delete failed");
+            setStatus("Deleted: " + slug, "ok");
+            selectedSlug = null;
+            loadList();
+          })
+          .catch(function (e) { setStatus(e.message || String(e), "err"); });
+      });
+
+      refreshBtn.addEventListener("click", loadList);
+      loadList();
+    })();
+  </script>
+</body>
+</html>

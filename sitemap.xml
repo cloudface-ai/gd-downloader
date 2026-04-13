@@ -35,14 +35,4 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  <url><loc>https://drive.imgtojpg.org/blog-download-google-drive-folder-as-zip.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-fix-google-drive-multiple-zip-files.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-bulk-download-shared-drive-files.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-download-nested-folders-single-archive.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-speed-up-google-drive-folder-downloads.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-secure-shared-drive-downloads.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-backup-client-deliverables-from-drive.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-troubleshoot-stalled-drive-downloads.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-self-host-drive-downloader-on-vps.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://drive.imgtojpg.org/blog-google-drive-downloader-for-teams.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

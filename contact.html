@@ -7,6 +7,8 @@
   <meta name="robots" content="index, follow" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="canonical" href="https://drive.imgtojpg.org/contact.html" />
+  <link rel="shortcut icon" href="/favicon.ico" />
   <title>Contact | GD Downloader</title>
   <style>
     body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; background: #f3f4f6; color: #111827; }
@@ -17,6 +19,13 @@
     a { color: #2563eb; text-decoration: none; }
     a:hover { text-decoration: underline; }
     .footer-links { margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.875rem; }
+  
+.site-footer { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; font-size: 0.8125rem; color: #6b7280; }
+.footer-brand { margin: 0 0 0.625rem; font-weight: 600; color: #111827; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.875rem; margin-bottom: 0.625rem; }
+.footer-links a { color: #2563eb; text-decoration: none; }
+.footer-links a:hover { text-decoration: underline; }
+
   </style>
 </head>
 <body>
@@ -32,14 +41,18 @@
       <p>
         We will respond through the communication channels listed on the official website.
       </p>
-      <p class="footer-links">
-        <a href="/">Home</a>
-        <a href="/about.html">About Us</a>
-        <a href="/blogs.html">Blogs</a>
-        <a href="/privacy-policy.html">Privacy Policy</a>
-        <a href="/terms-and-conditions.html">Terms</a>
-        <a href="/ads-disclosure.html">Ads Disclosure</a>
-      </p>
+
+      <footer class="site-footer" aria-label="Site footer">
+        <p class="footer-brand">A product of Elephic Technologies</p>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="/blogs.html">Blogs</a>
+          <a href="/about.html">About Us</a>
+          <a href="/privacy-policy.html">Privacy Policy</a>
+          <a href="/terms-and-conditions.html">Terms</a>
+          <a href="/ads-disclosure.html">Ads Disclosure</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </footer>
     </article>
   </main>
 </body>
