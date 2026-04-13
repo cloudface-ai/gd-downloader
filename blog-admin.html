@@ -128,6 +128,81 @@
       var apiBase = window.location.protocol + "//" + window.location.host;
       function apiUrl(path) { return apiBase + path; }
 
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function autoFormatContent(raw) {
+        var t = (raw || "").replace(/\r\n/g, "\n").trim();
+        if (!t) return "";
+        // If user already pasted HTML, keep it untouched.
+        if (/<[a-z][\s\S]*>/i.test(t)) return t;
+
+        var lines = t.split("\n");
+        var out = [];
+        var inList = false;
+        function closeList() {
+          if (inList) {
+            out.push("</ul>");
+            inList = false;
+          }
+        }
+        lines.forEach(function (line) {
+          var s = line.trim();
+          if (!s) {
+            closeList();
+            return;
+          }
+          if (/^####\s+/.test(s)) {
+            closeList();
+            out.push("<h4>" + escapeHtml(s.replace(/^####\s+/, "")) + "</h4>");
+            return;
+          }
+          if (/^###\s+/.test(s)) {
+            closeList();
+            out.push("<h3>" + escapeHtml(s.replace(/^###\s+/, "")) + "</h3>");
+            return;
+          }
+          if (/^##\s+/.test(s)) {
+            closeList();
+            out.push("<h2>" + escapeHtml(s.replace(/^##\s+/, "")) + "</h2>");
+            return;
+          }
+          if (/^#\s+/.test(s)) {
+            closeList();
+            out.push("<h2>" + escapeHtml(s.replace(/^#\s+/, "")) + "</h2>");
+            return;
+          }
+          if (/^[-*]\s+/.test(s)) {
+            if (!inList) {
+              out.push("<ul>");
+              inList = true;
+            }
+            out.push("<li>" + escapeHtml(s.replace(/^[-*]\s+/, "")) + "</li>");
+            return;
+          }
+          closeList();
+          out.push("<p>" + escapeHtml(s) + "</p>");
+        });
+        closeList();
+        return out.join("\n");
+      }
+
+      function readResponseSafe(r) {
+        var ct = (r.headers.get("content-type") || "").toLowerCase();
+        if (ct.indexOf("application/json") >= 0) {
+          return r.json().then(function (j) { return { ok: r.ok, body: j }; });
+        }
+        return r.text().then(function (txt) {
+          var msg = txt || r.statusText || "Request failed";
+          if (r.status === 401) msg = "Unauthorized. Reopen blog-admin and login again.";
+          return { ok: r.ok, body: { error: msg } };
+        });
+      }
+
       function setStatus(text, kind) {
         status.className = "status " + (kind || "muted");
         status.textContent = text;
@@ -144,7 +219,7 @@
           author_name: $("authorName").value.trim() || "Elephic Team",
           featured_image: $("featured").value.trim(),
           links_html: $("links").value.trim(),
-          content_html: $("content").value.trim(),
+          content_html: autoFormatContent($("content").value),
           token: $("token").value.trim()
         };
       }
@@ -185,8 +260,8 @@
           d.querySelector(".edit").addEventListener("click", function () { fillForm(it); });
           d.querySelector(".del").addEventListener("click", function () {
             if (!confirm("Delete blog " + it.slug + "?")) return;
-            fetch("/api/admin/blog/" + encodeURIComponent(it.slug), { method: "DELETE" })
-              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+            fetch(apiUrl("/api/admin/blog/" + encodeURIComponent(it.slug)), { method: "DELETE" })
+              .then(readResponseSafe)
               .then(function (res) {
                 if (!res.ok) throw new Error(res.body.error || "Delete failed");
                 setStatus("Deleted: " + it.slug, "ok");
@@ -201,7 +276,7 @@
 
       function loadList() {
         fetch(apiUrl("/api/admin/blog/list"))
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(readResponseSafe)
           .then(function (res) {
             if (!res.ok) throw new Error(res.body.error || "Could not load posts");
             renderList(res.body.items || []);
@@ -222,7 +297,7 @@
         uploadBtn.disabled = true;
         setStatus("Uploading image...", "muted");
         fetch(apiUrl("/api/admin/blog/upload-image"), { method: "POST", body: fd })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(readResponseSafe)
           .then(function (res) {
             if (!res.ok) throw new Error(res.body.error || "Upload failed");
             $("featured").value = res.body.url;
@@ -250,7 +325,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(p)
         })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(readResponseSafe)
           .then(function (res) {
             if (!res.ok) throw new Error(res.body.error || "Publish failed");
             setStatus("Published: " + res.body.url, "ok");
@@ -279,7 +354,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(p)
         })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(readResponseSafe)
           .then(function (res) {
             if (!res.ok) throw new Error(res.body.error || "Update failed");
             setStatus("Updated: /blog-" + slug + ".html", "ok");
@@ -298,7 +373,7 @@
         }
         if (!confirm("Delete blog " + slug + "?")) return;
         fetch(apiUrl("/api/admin/blog/" + encodeURIComponent(slug)), { method: "DELETE" })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(readResponseSafe)
           .then(function (res) {
             if (!res.ok) throw new Error(res.body.error || "Delete failed");
             setStatus("Deleted: " + slug, "ok");
